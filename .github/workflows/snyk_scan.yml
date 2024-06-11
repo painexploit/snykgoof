@@ -12,16 +12,16 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
           command: code test
-          args: --sarif-file-output=snyk.sarif
+          args: --sarif-file-output=.github/snyk.sarif
       - name: Process SARIF File
-        run: python3 .github/workflows/snyk_scan_python.py
+        run: bash .github/workflows/snyk-parse.sh
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       - name: Commit and Push changes
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "github-actions"
-          git add .github/data/vulnerability_report_*.json .github/data/vulnerability_report_*.txt
+          git add .github/data/vulnerability_report_*.json
           git commit -m "Add Snyk vulnerability reports"
           git push
         env:
