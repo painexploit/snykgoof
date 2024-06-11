@@ -3,7 +3,7 @@
 echo "Starting SARIF processing script..."
 
 # Define the SARIF file
-sarif_file=".github/workflows/snyk.sarif"
+sarif_file=".github/snyk.sarif"
 echo "SARIF file: $sarif_file"
 
 # Generate the timestamp for the filename
@@ -49,7 +49,7 @@ calculate_age_and_timestamp() {
   local age=0
 
   if [[ -z "$latest_file" ]]; then
-    echo "0" "new"
+    echo "0 new"
     return
   fi
 
@@ -70,9 +70,9 @@ calculate_age_and_timestamp() {
     start_date=$(date -d "${earliest_timestamp:0:8}" +%s)
     current_date=$(date +%s)
     age=$(( (current_date - start_date) / 86400 ))
-    echo "$age" "$earliest_timestamp"
+    echo "$age $earliest_timestamp"
   else
-    echo "0" "new"
+    echo "0 new"
   fi
 }
 
@@ -113,15 +113,22 @@ high_count=$(jq '[.[] | select(.severity == "High")] | length' "$output_json")
 medium_count=$(jq '[.[] | select(.severity == "Medium")] | length' "$output_json")
 low_count=$(jq '[.[] | select(.severity == "Low")] | length' "$output_json")
 
-summary="Total Vulnerabilities: $((high_count + medium_count + low_count))\n"
-summary+="High: $high_count\n"
+summary="Total Vulnerabilities: $((high_count + medium_count + low_count))
+"
+summary+="High: $high_count
+"
 summary+=$(jq -r '.[] | select(.severity == "High") | "\(.shortDescription), Path: \(.artifactLocationUri), Line: \(.startLine), Age: \(.age) days"' "$output_json")
-summary+="\nMedium: $medium_count\n"
+summary+="
+Medium: $medium_count
+"
 summary+=$(jq -r '.[] | select(.severity == "Medium") | "\(.shortDescription), Path: \(.artifactLocationUri), Line: \(.startLine), Age: \(.age) days"' "$output_json")
-summary+="\nLow: $low_count\n"
+summary+="
+Low: $low_count
+"
 summary+=$(jq -r '.[] | select(.severity == "Low") | "\(.shortDescription), Path: \(.artifactLocationUri), Line: \(.startLine), Age: \(.age) days"' "$output_json")
 
 echo -e "$summary"
+
 
 # Send the summary to Slack
 slack_webhook_url="${SLACK_WEBHOOK_URL}"
