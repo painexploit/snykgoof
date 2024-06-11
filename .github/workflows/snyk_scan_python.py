@@ -37,9 +37,10 @@ def calculate_bug_age(current_report, previous_report):
 
     return current_report
 
-# Create output directory
-output_dir = "/tmp/github_data"
-os.makedirs(output_dir, exist_ok=True)
+# Check if .github/data directory exists, if not, create it
+data_dir = '.github/data'
+if not os.path.exists(data_dir):
+    os.makedirs(data_dir)
 
 # Load the SARIF file
 with open('snyk.sarif', 'r') as file:
@@ -106,7 +107,7 @@ current_report = {
     'medium': medium_vulnerabilities,
     'low': low_vulnerabilities
 }
-report_json_filename = os.path.join(output_dir, f'vulnerability_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json')
+report_json_filename = os.path.join(data_dir, f'vulnerability_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json')
 save_json(current_report, report_json_filename)
 
 # Generate report
@@ -125,15 +126,8 @@ for vuln in low_vulnerabilities:
     report.append(f"{vuln['ruleName']}, Path: {vuln['path']}, Line: {vuln['line']}, Age: {vuln['age']} days")
 
 # Save report to a text file with timestamp
-report_filename = os.path.join(output_dir, f'vulnerability_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt')
+report_filename = os.path.join(data_dir, f'vulnerability_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt')
 with open(report_filename, 'w') as output_file:
     output_file.write("\n".join(report))
 
-# Save summary to a separate file for GitHub Actions to read
-summary_filename = os.path.join(output_dir, 'vulnerability_summary.txt')
-with open(summary_filename, 'w') as summary_file:
-    summary_file.write(f"High: {len(high_vulnerabilities)}\n")
-    summary_file.write(f"Medium: {len(medium_vulnerabilities)}\n")
-    summary_file.write(f"Low: {len(low_vulnerabilities)}\n")
-
-print(f"Report generation completed. Results saved in '{report_filename}', '{report_json_filename}', and '{summary_filename}'.")
+print(f"Report generation completed. Results saved in '{report_filename}'.")
