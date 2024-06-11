@@ -21,7 +21,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "github-actions"
-          git add .github/data/vulnerability_report_*.json
+          git add .github/data/vulnerability_report_*.json .github/data/vulnerability_*.txt
           git commit -m "Add Snyk vulnerability reports"
           git push
         env:
@@ -30,7 +30,7 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           run: |
-            report_file=$(ls -t .github/data/vulnerability_report_*.txt | head -n 1)
+            report_file=$(ls -t .github/data/vulnerability_*.txt | head -n 1)
             report_content=$(cat $report_file)
             payload=$(jq -n --arg text "$report_content" '{text: $text}')
             curl -X POST -H 'Content-type: application/json' --data "$payload" $SLACK_WEBHOOK_URL
