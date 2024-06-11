@@ -14,7 +14,7 @@ jobs:
           command: code test
           args: --sarif-file-output=snyk.sarif
       - name: Process SARIF File
-        run: sh snyk-parse.sh
+        run: sh .github/workflows/snyk-parse.sh
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       - name: Commit and Push changes
