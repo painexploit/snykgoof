@@ -12,15 +12,6 @@ def save_json(data, filename):
     with open(filename, 'w') as file:
         json.dump(data, file, indent=4)
 
-# Function to load the previous report
-def load_previous_report():
-    previous_report = {}
-    previous_files = [f for f in os.listdir() if f.startswith("vulnerability_report_") and f.endswith(".json")]
-    if previous_files:
-        latest_file = max(previous_files, key=os.path.getctime)
-        previous_report = load_json(latest_file)
-    return previous_report
-
 # Function to calculate the age of a bug
 def calculate_bug_age(current_report, previous_report):
     previous_bugs = {(bug['ruleName'], bug['path'], bug['line']): bug for bug in previous_report}
@@ -32,10 +23,12 @@ def calculate_bug_age(current_report, previous_report):
             current_timestamp = datetime.strptime(bug['timestamp'], '%Y-%m-%d %H:%M:%S')
             age_days = (current_timestamp - previous_timestamp).days
             bug['age'] = previous_bugs[bug_id].get('age', 0) + age_days
+            previous_bugs[bug_id] = bug  # Update the bug with the new timestamp and age
         else:
             bug['age'] = 0  # New bug
+            previous_bugs[bug_id] = bug
 
-    return current_report
+    return list(previous_bugs.values())
 
 # Check if .github/data directory exists, if not, create it
 data_dir = '.github/data'
@@ -92,10 +85,16 @@ for rule in rules:
                     low_vulnerabilities.append(vulnerability)
                 total_vulnerabilities += 1
 
-# Load the previous report for comparison
-previous_report = load_previous_report()
+# Determine the report file path
+report_json_filename = os.path.join(data_dir, 'vulnerability_report.json')
 
-# Calculate the age of vulnerabilities
+# Load the previous report for comparison
+if os.path.exists(report_json_filename):
+    previous_report = load_json(report_json_filename)
+else:
+    previous_report = {'high': [], 'medium': [], 'low': []}
+
+# Calculate the age of vulnerabilities and update the report
 high_vulnerabilities = calculate_bug_age(high_vulnerabilities, previous_report.get('high', []))
 medium_vulnerabilities = calculate_bug_age(medium_vulnerabilities, previous_report.get('medium', []))
 low_vulnerabilities = calculate_bug_age(low_vulnerabilities, previous_report.get('low', []))
@@ -107,7 +106,6 @@ current_report = {
     'medium': medium_vulnerabilities,
     'low': low_vulnerabilities
 }
-report_json_filename = os.path.join(data_dir, f'vulnerability_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json')
 save_json(current_report, report_json_filename)
 
 # Generate report
@@ -126,7 +124,7 @@ for vuln in low_vulnerabilities:
     report.append(f"{vuln['ruleName']}, Path: {vuln['path']}, Line: {vuln['line']}, Age: {vuln['age']} days")
 
 # Save report to a text file with timestamp
-report_filename = os.path.join(data_dir, f'vulnerability_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.txt')
+report_filename = os.path.join(data_dir, 'vulnerability_report.txt')
 with open(report_filename, 'w') as output_file:
     output_file.write("\n".join(report))
 
