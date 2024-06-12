@@ -111,7 +111,7 @@ done
 
 # Check if an existing file exists and merge the new vulnerabilities
 if [ -f "$existing_file" ]; then
-  jq -s '.[0] + .[1]' "$existing_file" "$temp_json" > temp.json.tmp && mv temp.json.tmp "$temp_json"
+  jq -s '.[0] + .[1] | unique_by(.shortDescription, .artifactLocationUri, .startLine)' "$existing_file" "$temp_json" > temp.json.tmp && mv temp.json.tmp "$temp_json"
 fi
 
 # Move the temporary JSON to the output file in .github/data
