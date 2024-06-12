@@ -19,10 +19,10 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       - name: Commit and Push changes
         run: |
-          git config --local user.email "action@github.com"
+           git config --local user.email "action@github.com"
           git config --local user.name "github-actions"
-          git add .github/data/vulnerability_report_latest.json
-          git commit -m "Update Snyk vulnerability reports"
+          git add .github/data/vulnerability_report_*.json
+          git commit -m "Add Snyk vulnerability reports"
           git push
         env:
           MY_GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
