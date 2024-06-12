@@ -8,7 +8,7 @@ echo "SARIF file: $sarif_file"
 
 # Generate the timestamp for the filename
 timestamp=$(date +"%Y%m%d_%H%M%S")
-output_json=".github/data/vulnerability_report_${timestamp}.json"
+output_json=".github/data/vulnerability_report_latest.json"
 echo "Output JSON: $output_json"
 
 # Check if .github/data folder exists, if not create it
@@ -19,9 +19,14 @@ else
   echo "Directory .github/data already exists"
 fi
 
-# Find the latest file in the .github/data directory
-latest_file=$(ls -t .github/data/vulnerability_report_*.json 2>/dev/null | head -n 1)
-echo "Latest file to be used for age calculation: $latest_file"
+# Check if the vulnerability report file already exists
+if [ -f "$output_json" ]; then
+  existing_file="$output_json"
+  echo "Using existing file: $existing_file"
+else
+  existing_file=""
+  echo "No existing file found. A new file will be created."
+fi
 
 # Retrieve the descriptions and levels dynamically and store them in arrays
 descriptions=()
@@ -48,12 +53,12 @@ calculate_age_and_timestamp() {
   local earliest_timestamp=""
   local age=0
 
-  if [[ -z "$latest_file" ]]; then
+  if [[ -z "$existing_file" ]]; then
     echo "0 new"
     return
   fi
 
-  vulnerabilities=$(jq -c '.[]' "$latest_file")
+  vulnerabilities=$(jq -c '.[]' "$existing_file")
   while IFS= read -r vulnerability; do
     vuln_desc=$(echo "$vulnerability" | jq -r '.shortDescription')
     vuln_uri=$(echo "$vulnerability" | jq -r '.artifactLocationUri')
@@ -104,6 +109,11 @@ for index in "${!descriptions[@]}"; do
   done
 done
 
+# Check if an existing file exists and merge the new vulnerabilities
+if [ -f "$existing_file" ]; then
+  jq -s '.[0] + .[1]' "$existing_file" "$temp_json" > temp.json.tmp && mv temp.json.tmp "$temp_json"
+fi
+
 # Move the temporary JSON to the output file in .github/data
 mv "$temp_json" "$output_json"
 echo "Moved temporary JSON to $output_json"
@@ -129,7 +139,6 @@ summary+=$(jq -r '.[] | select(.severity == "Low") | "\(.shortDescription), Path
 
 echo -e "$summary"
 
-
 # Send the summary to Slack
 slack_webhook_url="${SLACK_WEBHOOK_URL}"
 
@@ -139,4 +148,4 @@ curl -X POST -H 'Content-type: application/json' --data "$payload" "$slack_webho
 echo "Sent summary to Slack"
 
 # Print the name of the latest file checked
-echo "Latest file checked for age calculation: $latest_file"
+echo "Latest file checked for age calculation: $existing_file"
