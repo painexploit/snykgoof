@@ -34,7 +34,7 @@ def upload_to_dynamodb(file_path, table_name):
     counts = parse_sarif(file_path)
 
     # Initialize DynamoDB client
-    dynamodb = boto3.resource('dynamodb')
+    dynamodb = boto3.resource('dynamodb', region_name=region_name)
     table = dynamodb.Table(table_name)
 
     # Upload the counts
@@ -52,4 +52,5 @@ def upload_to_dynamodb(file_path, table_name):
 if __name__ == '__main__':
     file_path = sys.argv[1]
     table_name = os.getenv('DYNAMODB_TABLE_NAME')
+    region_name = os.getenv('AWS_REGION')
     upload_to_dynamodb(file_path, table_name)
