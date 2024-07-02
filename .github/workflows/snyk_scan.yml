@@ -17,13 +17,19 @@ jobs:
         run: bash .github/workflows/snyk-parse.sh
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-      - name: Commit and Push changes
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install boto3
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "github-actions"
-          git add .github/data/vulnerability_report_*.json
-          git commit -m "Add Snyk vulnerability reports"
-          git push
+          python -m pip install boto3
+
+      - name: Upload results to DynamoDB
         env:
-          MY_GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
-      
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          DYNAMODB_TABLE_NAME: "snyk"
+        run: |
+          python upload_to_dynamodb.py snyk.sarif
