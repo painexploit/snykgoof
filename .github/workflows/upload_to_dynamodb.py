@@ -40,11 +40,11 @@ def upload_to_dynamodb(file_path, table_name):
     # Upload the counts
     response = table.put_item(
         Item={
-            'ScanId': str(uuid.uuid4()),
-            'Critical': counts['Critical'],
-            'High': counts['High'],
-            'Medium': counts['Medium'],
-            'Low': counts['Low']
+            'id': str(uuid.uuid4()),
+            'critical': counts['Critical'],
+            'high': counts['High'],
+            'medium': counts['Medium'],
+            'low': counts['Low']
         }
     )
     return response
