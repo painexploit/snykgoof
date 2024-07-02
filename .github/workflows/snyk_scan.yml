@@ -32,4 +32,4 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           DYNAMODB_TABLE_NAME: "snyk"
         run: |
-          python .github/workflows/upload_to_dynamodb.py snyk.sarif
+          python .github/workflows/upload_to_dynamodb.py .github/snyk.sarif
